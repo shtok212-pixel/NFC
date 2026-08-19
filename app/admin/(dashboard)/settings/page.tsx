@@ -17,6 +17,7 @@ export default async function AdminSettingsPage() {
       wifi_security: "WPA",
       google_review_url: null,
       review_delay_minutes: 30,
+      app_base_url: null,
     };
 
   return <SettingsForm initial={initial} />;

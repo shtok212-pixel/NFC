@@ -72,6 +72,7 @@ export interface RestaurantSettings {
   wifi_security: "WPA" | "WEP" | "nopass";
   google_review_url: string | null;
   review_delay_minutes: number;
+  app_base_url: string | null;
 }
 
 /**

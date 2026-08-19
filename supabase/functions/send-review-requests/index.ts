@@ -8,9 +8,11 @@
 //   - texts them via Twilio if they left a phone number, or
 //   - sends a Web Push notification (VAPID, no payload — see app/sw.js)
 //     if they enabled push instead.
-// Either way the notification links straight to the restaurant's Google
-// Business review page. Delivery attempts are logged to
-// review_notifications and the session is stamped so it's never sent twice.
+// The link routes through our own /review rating screen when app_base_url
+// is configured (rating first, then a positive visit continues on to
+// Google), falling back to the Google listing directly otherwise. Delivery
+// attempts are logged to review_notifications and the session is stamped
+// so it's never sent twice.
 //
 // Deploy:   supabase functions deploy send-review-requests
 // Secrets:  supabase secrets set \
@@ -57,16 +59,25 @@ Deno.serve(async (req) => {
 
   const { data: settings } = await supabase
     .from("restaurant_settings")
-    .select("google_review_url, review_delay_minutes, restaurant_name")
+    .select("google_review_url, review_delay_minutes, restaurant_name, app_base_url")
     .eq("id", 1)
     .maybeSingle();
 
-  const reviewUrl = settings?.google_review_url;
   const delayMinutes = settings?.review_delay_minutes ?? 30;
   const restaurantName = settings?.restaurant_name ?? "us";
 
-  if (!reviewUrl) {
+  if (!settings?.google_review_url) {
     return Response.json({ ok: true, skipped: "no google_review_url configured" });
+  }
+
+  // Prefer routing through our own /review page (rating first, then a
+  // positive visit continues on to Google) over linking straight to the
+  // public listing — see components/customer/ReviewScreen.tsx.
+  function buildLink(tableNumber: number): string {
+    if (settings!.app_base_url) {
+      return `${settings!.app_base_url.replace(/\/$/, "")}/review?table=${tableNumber}`;
+    }
+    return settings!.google_review_url!;
   }
 
   const cutoff = new Date(Date.now() - delayMinutes * 60_000).toISOString();
@@ -88,7 +99,8 @@ Deno.serve(async (req) => {
   const results: Array<{ id: string; channel: string; status: string }> = [];
 
   for (const session of sessions) {
-    const message = `Thanks for dining with ${restaurantName}! We'd love your feedback: ${reviewUrl}`;
+    const link = buildLink(session.table_number);
+    const message = `Thanks for dining with ${restaurantName}! We'd love your feedback: ${link}`;
     let outcome: { channel: "sms" | "push"; status: "sent" | "failed"; response?: string } | null = null;
 
     if (session.phone_number && TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_FROM_NUMBER) {

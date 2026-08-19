@@ -112,6 +112,13 @@ create table if not exists public.restaurant_settings (
   wifi_security text not null default 'WPA', -- 'WPA' | 'WEP' | 'nopass'
   google_review_url text,
   review_delay_minutes int not null default 30,
+  -- Deployed URL of the Next.js app (e.g. https://order.yourrestaurant.com),
+  -- no trailing slash. When set, the review-request job links to
+  -- {app_base_url}/review?table=N — the in-app rating screen — instead of
+  -- straight to google_review_url, so a rough visit becomes private
+  -- feedback rather than a public 1-star review. Falls back to linking
+  -- directly to google_review_url when left blank.
+  app_base_url text,
   updated_at timestamptz not null default now(),
   constraint restaurant_settings_singleton check (id = 1)
 );

@@ -6,8 +6,9 @@ import { NextResponse } from "next/server";
  * key at request time — the SW has no access to process.env otherwise.
  *
  * At push time (no payload — see supabase/functions/send-review-requests)
- * it fetches the live Google review link straight from Supabase so the
- * notification always points at the current link, then opens it on click.
+ * it fetches the live settings from Supabase — routing through our own
+ * /review rating screen when app_base_url is configured, straight to the
+ * Google listing otherwise — then opens that link on click.
  */
 export function GET() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -26,11 +27,13 @@ self.addEventListener("push", (event) => {
       let reviewUrl = "/";
       try {
         const res = await fetch(
-          SUPABASE_URL + "/rest/v1/restaurant_settings?select=google_review_url&id=eq.1",
+          SUPABASE_URL + "/rest/v1/restaurant_settings?select=google_review_url,app_base_url&id=eq.1",
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY } }
         );
         const rows = await res.json();
-        if (rows?.[0]?.google_review_url) reviewUrl = rows[0].google_review_url;
+        const row = rows?.[0];
+        if (row?.app_base_url) reviewUrl = row.app_base_url.replace(/\\/$/, "") + "/review";
+        else if (row?.google_review_url) reviewUrl = row.google_review_url;
       } catch (e) {
         // Fall back to "/" if Supabase is unreachable — still shows the notification.
       }

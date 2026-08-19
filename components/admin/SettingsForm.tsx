@@ -29,6 +29,7 @@ export function SettingsForm({ initial }: { initial: RestaurantSettings }) {
         wifi_security: form.wifi_security,
         google_review_url: form.google_review_url,
         review_delay_minutes: form.review_delay_minutes,
+        app_base_url: form.app_base_url,
       })
       .eq("id", 1);
     setSaving(false);
@@ -100,6 +101,21 @@ export function SettingsForm({ initial }: { initial: RestaurantSettings }) {
               placeholder="https://g.page/r/..."
               className="h-11 w-full rounded-xl border border-black/10 px-3 outline-none focus:border-ink-900"
             />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-ink-700/70">
+              App URL <span className="font-normal text-ink-700/40">(optional)</span>
+            </span>
+            <input
+              value={form.app_base_url ?? ""}
+              onChange={(e) => field("app_base_url", e.target.value)}
+              placeholder="https://order.yourrestaurant.com"
+              className="h-11 w-full rounded-xl border border-black/10 px-3 outline-none focus:border-ink-900"
+            />
+            <span className="mt-1 block text-xs text-ink-700/50">
+              When set, the review request opens your <code>/review</code> rating screen first —
+              only 4–5 star visits continue on to Google. Left blank, it links straight to Google.
+            </span>
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-medium text-ink-700/70">
