@@ -19,9 +19,13 @@ Built with **Next.js 14 (App Router)**, **Tailwind CSS**, **Supabase**
   one-tap-copy password and a scannable `WIFI:` QR code.
 - **Automated review requests** — customers can optionally leave a phone
   number or enable Web Push on the welcome screen; a scheduled job then
-  texts/pushes them a link to your Google Business review page a
-  configurable number of minutes (default 30) after their meal is marked
-  delivered.
+  texts/pushes them a link a configurable number of minutes (default 30)
+  after their meal is marked delivered. That link opens `/review` — a
+  bold 5-star rating screen — first; only 4–5 star visits continue on to
+  your Google Business page, so a rough visit becomes private feedback
+  instead of a public 1-star review. Set an **App URL** in
+  `/admin/settings` to enable this routing; leave it blank to link
+  straight to Google instead.
 - **Admin dashboard** (`/admin`, Supabase-Auth gated) — real-time
   New → Preparing → Delivered board grouped by table, live "Call Waiter"
   alerts, and a settings page for Wi-Fi/review configuration.
@@ -32,6 +36,7 @@ Built with **Next.js 14 (App Router)**, **Tailwind CSS**, **Supabase**
 app/
   page.tsx                   Landing screen ("scan the tag on your table")
   menu/page.tsx               Table-locked menu (reads ?table=)
+  review/page.tsx              5-star rating screen (the review-request link opens here)
   admin/login/page.tsx         Staff sign-in
   admin/(dashboard)/           Auth-gated dashboard shell
     page.tsx                    Orders board
