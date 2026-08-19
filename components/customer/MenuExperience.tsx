@@ -55,12 +55,12 @@ export function MenuExperience({
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-[#f7f7f8]">
-      <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-white/95 px-4 py-3 backdrop-blur-md">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-700/50">
+          <p className="text-[10.5px] font-bold uppercase tracking-widest text-ink-900/35">
             {settings?.restaurant_name ?? "Menu"}
           </p>
-          <p className="text-sm font-bold text-ink-900">Table {tableNumber}</p>
+          <p className="font-display text-[17px] font-semibold text-ink-900">Table {tableNumber}</p>
         </div>
       </header>
 

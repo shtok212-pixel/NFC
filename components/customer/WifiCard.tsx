@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Wifi, Copy, Check, QrCode } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Wifi, Copy, Check } from "lucide-react";
 import type { RestaurantSettings } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /** Builds the standard `WIFI:` URI that phone cameras auto-detect and offer
- *  to join, so a QR scan is a genuine one-tap connect (no typing). */
+ *  to join, so a QR scan is a genuine one-tap connect (no typing). This is
+ *  also the only *real* one-tap join mechanism available from a web page —
+ *  there's no browser API that joins a network for the user directly — so
+ *  the primary action below opens straight to it instead of hiding it. */
 function buildWifiUri(settings: RestaurantSettings): string {
   const esc = (v: string) => v.replace(/([\\;,:"])/g, "\\$1");
   const security = settings.wifi_security === "nopass" ? "nopass" : settings.wifi_security;
@@ -15,8 +18,16 @@ function buildWifiUri(settings: RestaurantSettings): string {
   return `WIFI:T:${security};S:${esc(settings.wifi_ssid ?? "")};${pass};`;
 }
 
+/**
+ * The welcome screen's primary call to action. Collapsed, it's a single
+ * large pill button. Tapping it expands a connect panel (QR to scan with
+ * the camera, plus a tap-to-copy password as a fallback) and the button
+ * itself flips to a "connected" state — mirroring how joining Wi-Fi from
+ * a lock-screen prompt actually feels on iOS.
+ */
 export function WifiCard({ settings }: { settings: RestaurantSettings }) {
-  const [showQr, setShowQr] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [connected, setConnected] = useState(false);
   const [copied, setCopied] = useState(false);
 
   if (!settings.wifi_ssid) return null;
@@ -33,47 +44,58 @@ export function WifiCard({ settings }: { settings: RestaurantSettings }) {
   }
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-card">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-          <Wifi className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-ink-900">Free Wi-Fi</p>
-          <p className="truncate text-sm text-ink-700/70">{settings.wifi_ssid}</p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowQr((v) => !v)}
-          aria-label="Show Wi-Fi QR code"
-        >
-          <QrCode className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex flex-col gap-3">
+      <button
+        onClick={() => {
+          setOpen((v) => !v);
+          if (!connected) setConnected(true);
+        }}
+        className={cn(
+          "flex w-full items-center justify-center gap-2.5 rounded-2xl px-5 py-[18px] text-[16px] font-bold tracking-tight text-ink-900 shadow-[0_14px_30px_-12px_rgba(200,121,59,0.65)] transition-transform active:scale-[0.97]",
+          connected
+            ? "bg-gradient-to-br from-sage-500 to-sage-600 shadow-[0_14px_30px_-12px_rgba(124,160,133,0.55)]"
+            : "bg-gradient-to-br from-brand-400 to-brand-600"
+        )}
+      >
+        {connected ? <Check className="h-[19px] w-[19px]" /> : <Wifi className="h-[19px] w-[19px]" />}
+        {connected ? `Connected · ${settings.wifi_ssid}` : "Connect to Free Wi-Fi"}
+      </button>
 
-      {showQr ? (
-        <div className="mt-4 flex flex-col items-center gap-2 border-t border-black/5 pt-4">
-          <div className="rounded-xl border border-black/10 bg-white p-3">
-            <QRCodeSVG value={buildWifiUri(settings)} size={168} />
+      <div
+        className={cn(
+          "grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+      >
+        <div className="min-h-0">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl bg-white p-3">
+              <QRCodeSVG value={buildWifiUri(settings)} size={150} />
+            </div>
+            <p className="text-center text-xs text-white/60">
+              Scan with your camera app to join automatically
+            </p>
+            {settings.wifi_password ? (
+              <button
+                onClick={copyPassword}
+                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2.5 text-left"
+              >
+                <span>
+                  <span className="mr-2 text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                    Password
+                  </span>
+                  <span className="font-mono text-sm text-white">{settings.wifi_password}</span>
+                </span>
+                {copied ? (
+                  <Check className="h-4 w-4 shrink-0 text-sage-500" />
+                ) : (
+                  <Copy className="h-4 w-4 shrink-0 text-white/50" />
+                )}
+              </button>
+            ) : null}
           </div>
-          <p className="text-center text-xs text-ink-700/60">
-            Scan with your camera app to join automatically
-          </p>
         </div>
-      ) : settings.wifi_password ? (
-        <button
-          onClick={copyPassword}
-          className="mt-3 flex w-full items-center justify-between rounded-xl bg-black/5 px-3 py-2 text-left"
-        >
-          <span className="font-mono text-sm text-ink-800">{settings.wifi_password}</span>
-          {copied ? (
-            <Check className="h-4 w-4 shrink-0 text-emerald-600" />
-          ) : (
-            <Copy className="h-4 w-4 shrink-0 text-ink-700/50" />
-          )}
-        </button>
-      ) : null}
+      </div>
     </div>
   );
 }

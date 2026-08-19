@@ -22,9 +22,9 @@ export function MenuList({ categories }: { categories: MenuCategoryWithItems[] }
   return (
     <div className="flex flex-1 flex-col">
       <CategoryTabs categories={nonEmpty} activeId={active.id} onSelect={setActiveId} />
-      <div className="flex flex-col gap-2.5 px-4 pb-28 pt-3">
-        {active.items.map((item) => (
-          <MenuItemCard key={item.id} item={item} />
+      <div key={active.id} className="flex flex-col gap-2.5 px-4 pb-28 pt-3">
+        {active.items.map((item, i) => (
+          <MenuItemCard key={item.id} item={item} delay={i * 40} />
         ))}
       </div>
     </div>
