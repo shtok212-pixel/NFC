@@ -1,0 +1,9 @@
+# Supabase CLI project config. See https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "nfc-table-menu"
+
+[functions.send-review-requests]
+# Invoked by pg_cron/pg_net (see the schedule at the bottom of schema.sql)
+# with a plain bearer token, not a Supabase Auth session — so it can't use
+# the platform's built-in JWT check and verifies CRON_SHARED_SECRET itself.
+verify_jwt = false
